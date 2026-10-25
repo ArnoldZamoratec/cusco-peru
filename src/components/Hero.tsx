@@ -18,20 +18,27 @@ function useReady() {
   return ready;
 }
 
-// Splits text into individually animated letters (screen readers get the full string).
-function Letters({ text, delay, className, show }: { text: string; delay: number; className?: string; show: boolean }) {
+// Splits text into individually animated letters or words (screen readers get the full string).
+// The clip mask is padded and pulled back with negative margins so italic overhangs and
+// descenders aren't cut off; word mode also keeps line breaks between words only.
+function Letters({ text, delay, className, show, by = "letter" }: { text: string; delay: number; className?: string; show: boolean; by?: "letter" | "word" }) {
+  const parts = by === "word" ? text.split(" ") : text.split("");
+  const stagger = by === "word" ? 0.12 : 0.045;
   return (
     <span className={className} aria-hidden>
-      {text.split("").map((ch, i) => (
-        <span key={i} className="inline-block overflow-hidden align-bottom">
-          <motion.span
-            className="inline-block"
-            initial={{ y: "110%", opacity: 0 }}
-            animate={show ? { y: "0%", opacity: 1 } : {}}
-            transition={{ duration: 1, delay: delay + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {ch === " " ? " " : ch}
-          </motion.span>
+      {parts.map((ch, i) => (
+        <span key={i}>
+          <span className="-mx-[0.15em] -my-[0.2em] inline-block overflow-hidden px-[0.15em] py-[0.2em] align-bottom">
+            <motion.span
+              className="inline-block"
+              initial={{ y: "110%", opacity: 0 }}
+              animate={show ? { y: "0%", opacity: 1 } : {}}
+              transition={{ duration: 1, delay: delay + i * stagger, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {ch === " " ? " " : ch}
+            </motion.span>
+          </span>
+          {by === "word" && i < parts.length - 1 && " "}
         </span>
       ))}
     </span>
@@ -107,7 +114,7 @@ export default function Hero() {
           <span className="sr-only">{site.title}</span>
           <Letters text="CUSCO" delay={0.2} show={ready}
             className="block font-serif text-[22vw] font-light leading-[0.85] tracking-[-0.02em] md:text-[15vw]" />
-          <Letters text="Donde los Andes cuentan su historia" delay={0.6} show={ready}
+          <Letters text="Donde los Andes cuentan su historia" by="word" delay={0.6} show={ready}
             className="mx-auto mt-4 block max-w-[92vw] font-serif text-[5.3vw] font-light italic leading-tight md:text-[3.4vw]" />
         </h1>
 
